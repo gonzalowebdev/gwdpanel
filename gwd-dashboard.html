@@ -742,7 +742,7 @@ a{text-decoration:none;color:inherit}
     <div style="display:flex;gap:7px"><button class="btn btn-primary" onclick="saveClient()">Guardar</button><button class="btn btn-ghost" onclick="closeOv('clientModal')">Cancelar</button></div>
   </div>
 </div>
-<!-- Supabase SDK (UMD — expone window.supabase, sin conflictos de nombre) -->
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 /* ══════════════════════════════════════════
@@ -751,12 +751,10 @@ a{text-decoration:none;color:inherit}
 const SUPA_URL = 'https://gwffwqswoyhwxbhuvocw.supabase.co';   // ← reemplazar
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZmZ3cXN3b3lod3hiaHV2b2N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDUwMzMsImV4cCI6MjA5NTM4MTAzM30.me1tyqOJJPuA16RYACjUM3tsrTYO-5ty6D1lsnuho_w';                 // ← reemplazar
 
-// Crear cliente usando el namespace UMD (window.supabase.createClient)
-// Evita el error "supabase is already declared"
 const _sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-let _user = null; // usuario autenticado, se carga en initApp()
+let _user = null;
 
-/* ═══════ STATE (en memoria; Supabase es la fuente de verdad) ═══════ */
+/* ═══════ STATE ═══════ */
 let projects=[], tasks=[], events=[], notes=[], clients=[];
 let settings={agency:'gwevdeb',owner:'',email:'',phone:'',web:'',currency:'USD',pdfNote:'Presupuesto válido por 15 días. IVA no incluido.'};
 let selFilter='all',editProjId=null,viewProjId=null,editTaskId=null,editNoteId=null,editClientId=null;
@@ -865,28 +863,22 @@ function exportBudgetPDF(){
   const validStr=new Date(today.getTime()+15*864e5).toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
   const budNum='GWD-'+today.getFullYear()+'-'+String(Math.floor(Math.random()*900)+100);
 
-  // Background
   doc.setFillColor(11,18,32); doc.rect(0,0,W,H,'F');
-  // Blue accent left strip
   doc.setFillColor(30,176,240); doc.rect(0,0,5,H,'F');
-  // Header bg
   doc.setFillColor(17,24,39); doc.rect(5,0,W-5,58,'F');
 
-  // Logo
   try{doc.addImage('logo.png','PNG',13,9,26,26)}
   catch(e){
     doc.setFillColor(30,176,240);doc.roundedRect(13,9,26,26,3,3,'F');
     doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('GWD',26,24,'center');
   }
 
-  // Agency name
   doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(ag.toUpperCase(),45,21);
   doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(148,163,196);
   doc.text('Agencia de Desarrollo Web',45,28);
   if(settings.web)doc.text(settings.web,45,35);
   if(settings.email)doc.text(settings.email,45,42);
 
-  // Budget number (top right)
   doc.setTextColor(30,176,240);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('PRESUPUESTO',W-12,18,'right');
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(255,255,255);
   doc.text(budNum,W-12,25,'right');
@@ -894,16 +886,13 @@ function exportBudgetPDF(){
   doc.text('Emisión: '+dateStr,W-12,32,'right');
   doc.text('Válido hasta: '+validStr,W-12,39,'right');
 
-  // Thin divider line
   doc.setDrawColor(30,176,240);doc.setLineWidth(0.25);doc.line(13,60,W-13,60);
 
-  // "Facturar a" block
   doc.setFillColor(22,32,52);doc.roundedRect(13,64,W-26,26,3,3,'F');
   doc.setTextColor(148,163,196);doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.text('FACTURAR A',21,71);
   doc.setTextColor(232,238,255);doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text(comp,21,79);
   if(email){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(148,163,196);doc.text(email,21,85)}
 
-  // Section: Project details
   let y=100;
   doc.setTextColor(30,176,240);doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('DETALLES DEL PROYECTO',13,y);
   doc.setDrawColor(30,50,90);doc.setLineWidth(0.4);doc.line(13,y+3,W-13,y+3);
@@ -920,12 +909,10 @@ function exportBudgetPDF(){
     doc.setTextColor(232,238,255);doc.setFontSize(9.5);doc.setFont('helvetica','normal');doc.text(String(v||'—'),W/2,y+i*14+6);
   });
   y+=30;
-  // Payment
   doc.setTextColor(148,163,196);doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.text('CONDICIONES DE PAGO',13,y);
   doc.setTextColor(232,238,255);doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text(pay,13,y+6);
   y+=18;
 
-  // Services
   if(svs.length){
     doc.setTextColor(30,176,240);doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('SERVICIOS INCLUIDOS',13,y);
     doc.setDrawColor(30,50,90);doc.setLineWidth(0.4);doc.line(13,y+3,W-13,y+3);
@@ -941,7 +928,6 @@ function exportBudgetPDF(){
     y+=perCol*8+8;
   }
 
-  // Notes / scope
   if(notesT){
     doc.setTextColor(30,176,240);doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('ALCANCE Y NOTAS',13,y);
     doc.setDrawColor(30,50,90);doc.setLineWidth(0.4);doc.line(13,y+3,W-13,y+3);
@@ -952,10 +938,8 @@ function exportBudgetPDF(){
     doc.text(sp,13,y);y+=sp.length*5+10;
   }
 
-  // Total box
   if(y<212)y=212;
   doc.setFillColor(30,176,240);doc.roundedRect(13,y,W-26,30,3,3,'F');
-  // subtle dark pattern on total box
   doc.setFillColor(0,100,160);doc.roundedRect(13,y,40,30,3,0,'F');
   doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('TOTAL DEL PROYECTO',21,y+10);
   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(220,240,255);
@@ -963,7 +947,6 @@ function exportBudgetPDF(){
   doc.setFont('helvetica','bold');doc.setFontSize(21);doc.setTextColor(255,255,255);
   doc.text(fmt(total),W-18,y+21,'right');
 
-  // Footer
   doc.setFillColor(17,24,39);doc.rect(0,H-18,W,18,'F');
   doc.setDrawColor(30,176,240);doc.setLineWidth(0.25);doc.line(0,H-18,W,H-18);
   doc.setTextColor(148,163,196);doc.setFont('helvetica','normal');doc.setFontSize(6.5);
@@ -1054,15 +1037,15 @@ function renderProj(){
   const lm={done:'Terminado',maintenance:'Mantenimiento',progress:'En Proceso',cancelled:'Cancelado'};
   document.getElementById('projBody').innerHTML=list.length?list.map(p=>`
     <tr>
-      <td><div class="cell-p">${p.name}</div><div class="cell-s">${p.company||'—'}</div></td>
-      <td><span class="tag">${p.type}</span></td>
+      <td><div class="cell-p">${escapeHtml(p.name)}</div><div class="cell-s">${escapeHtml(p.company||'—')}</div></td>
+      <td><span class="tag">${escapeHtml(p.type)}</span></td>
       <td><span class="badge ${bm[p.status]||'bp'}">${lm[p.status]||p.status}</span></td>
       <td class="mono" style="font-weight:600;font-size:.8rem">${fmt(p.price)}</td>
       <td style="color:var(--text3);font-size:.74rem">${fmtDate(p.date)}</td>
       <td><div style="display:flex;gap:4px">
-        <button class="btn btn-ghost btn-sm" onclick="viewProj(${p.id})">Ver</button>
-        <button class="btn btn-ghost btn-sm btn-icon" onclick="openProjModal(${p.id})" title="Editar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:12px;height:12px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="delProj(${p.id})" title="Eliminar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+        <button class="btn btn-ghost btn-sm" onclick="viewProj('${p.id}')">Ver</button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openProjModal('${p.id}')" title="Editar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:12px;height:12px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="delProj('${p.id}')" title="Eliminar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
       </div></td>
     </tr>`).join(''):`<tr><td colspan="6" class="empty">Sin resultados.</td></tr>`;
 }
@@ -1080,7 +1063,7 @@ function addCred(k='',v=''){
   const d=document.createElement('div');
   d.className='cr-row';
   d.style.cssText='display:grid;grid-template-columns:1fr 1fr 30px;gap:5px;margin-bottom:6px;align-items:center';
-  d.innerHTML='<input class="fi crk" type="text" placeholder="URL, Usuario, cPanel…" value="'+k+'" style="margin:0"><input class="fi crv" type="text" placeholder="valor" value="'+v+'" style="margin:0"><button onclick="this.parentElement.remove()" style="width:28px;height:34px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>';
+  d.innerHTML='<input class="fi crk" type="text" placeholder="URL, Usuario, cPanel…" value="'+k.replace(/"/g,'&quot;')+'" style="margin:0"><input class="fi crv" type="text" placeholder="valor" value="'+v.replace(/"/g,'&quot;')+'" style="margin:0"><button onclick="this.parentElement.remove()" style="width:28px;height:34px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>';
   document.getElementById('credFields').appendChild(d);
 }
 
@@ -1096,21 +1079,21 @@ function viewProj(id){
     credHTML='<div style="margin-top:14px"><div class="sec-title">Credenciales</div>';
     p.creds.forEach(c=>{
       const uid='cv'+Date.now()+Math.random().toString(36).slice(2);
-      credHTML+='<div class="cred-item"><div style="flex:1;min-width:0"><div class="cred-key">'+c.key+'</div><div class="cred-val" id="'+uid+'">••••••••••</div></div><div class="cred-btns"><button class="cbtn" onclick="toggleCred(\''+uid+'\',\''+encodeURIComponent(c.val)+'\',this)">Mostrar</button><button class="cbtn" onclick="navigator.clipboard.writeText(\''+c.val.replace(/'/g,"\\'")+'\')||0;toast(\'Copiado\')">Copiar</button></div></div>';
+      credHTML+='<div class="cred-item"><div style="flex:1;min-width:0"><div class="cred-key">'+escapeHtml(c.key)+'</div><div class="cred-val" id="'+uid+'">••••••••••</div></div><div class="cred-btns"><button class="cbtn" onclick="toggleCred(\''+uid+'\',\''+encodeURIComponent(c.val)+'\',this)">Mostrar</button><button class="cbtn" onclick="navigator.clipboard.writeText(\''+c.val.replace(/'/g,"\\'")+'\');toast(\'Copiado\')">Copiar</button></div></div>';
     });
     credHTML+='</div>';
   }
   document.getElementById('vmContent').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-      <div><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Empresa</div><div style="font-weight:600;font-size:.85rem">${p.company||'—'}</div></div>
-      <div><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Tipo</div><span class="tag">${p.type}</span></div>
+      <div><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Empresa</div><div style="font-weight:600;font-size:.85rem">${escapeHtml(p.company||'—')}</div></div>
+      <div><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Tipo</div><span class="tag">${escapeHtml(p.type)}</span></div>
       <div><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Estado</div><span class="badge ${bm[p.status]}">${lm[p.status]}</span></div>
       <div><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Precio</div><div class="mono" style="font-weight:700;font-size:1.05rem;color:var(--blue)">${fmt(p.price)}</div></div>
       <div><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Inicio</div><div style="font-size:.82rem">${fmtDate(p.date)}</div></div>
       <div><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Entrega</div><div style="font-size:.82rem">${fmtDate(p.due)}</div></div>
     </div>
-    ${p.stack?'<div style="margin-bottom:10px"><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Stack</div><div style="font-size:.8rem">'+p.stack+'</div></div>':''}
-    ${p.description?'<div style="background:var(--surface2);border-radius:7px;padding:11px;font-size:.8rem;color:var(--text2);line-height:1.6">'+p.description+'</div>':''}
+    ${p.stack?'<div style="margin-bottom:10px"><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:3px;font-weight:700">Stack</div><div style="font-size:.8rem">'+escapeHtml(p.stack)+'</div></div>':''}
+    ${p.description?'<div style="background:var(--surface2);border-radius:7px;padding:11px;font-size:.8rem;color:var(--text2);line-height:1.6">'+escapeHtml(p.description)+'</div>':''}
     ${credHTML}`;
   document.getElementById('vmEdit').onclick=()=>{closeOv('viewModal');openProjModal(id)};
   openOv('viewModal');
@@ -1153,7 +1136,6 @@ function exportProjPDF(){
 
   doc.setDrawColor(30,176,240);doc.setLineWidth(0.25);doc.line(13,60,W-13,60);
 
-  // Project title block
   doc.setFillColor(22,32,52);doc.roundedRect(13,64,W-26,22,3,3,'F');
   doc.setTextColor(148,163,196);doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.text('PROYECTO',21,71);
   doc.setTextColor(232,238,255);doc.setFontSize(13);doc.setFont('helvetica','bold');doc.text(p.name,21,79);
@@ -1197,14 +1179,12 @@ function exportProjPDF(){
     y+=8;
   }
 
-  // Confidential notice
   if(y<230)y=230;
   doc.setFillColor(22,32,52);doc.roundedRect(13,y,W-26,14,3,3,'F');
   doc.setTextColor(148,163,196);doc.setFont('helvetica','normal');doc.setFontSize(7);
   doc.text('Este documento es confidencial. Generado exclusivamente para '+p.company+'.',20,y+6);
   doc.text('No redistribuir sin autorización de '+ag+'.',20,y+12);
 
-  // Footer
   doc.setFillColor(17,24,39);doc.rect(0,H-18,W,18,'F');
   doc.setDrawColor(30,176,240);doc.setLineWidth(0.25);doc.line(0,H-18,W,H-18);
   doc.setTextColor(148,163,196);doc.setFont('helvetica','normal');doc.setFontSize(6.5);
@@ -1217,13 +1197,25 @@ function exportProjPDF(){
 }
 
 /* ═══════ TASKS ═══════ */
-function openTaskModal(col='todo'){
-  editTaskId=null;
-  ['tTitle','tProj','tNotes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('tCol').value=col;
-  document.getElementById('tPrio').value='med';
-  document.getElementById('tDue').value='';
-  document.getElementById('tmTitle').textContent='Nueva Tarea';
+function openTaskModal(col=null, taskId=null){
+  editTaskId=taskId;
+  if(taskId){
+    const t = tasks.find(x=>x.id===taskId);
+    if(!t) return;
+    document.getElementById('tmTitle').textContent='Editar Tarea';
+    document.getElementById('tTitle').value=t.title;
+    document.getElementById('tCol').value=t.col;
+    document.getElementById('tPrio').value=t.priority||t.prio||'med';
+    document.getElementById('tProj').value=t.project||'';
+    document.getElementById('tDue').value=t.due||'';
+    document.getElementById('tNotes').value=t.notes||'';
+  } else {
+    document.getElementById('tmTitle').textContent='Nueva Tarea';
+    ['tTitle','tProj','tNotes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('tCol').value=col || 'todo';
+    document.getElementById('tPrio').value='med';
+    document.getElementById('tDue').value='';
+  }
   openOv('taskModal');
 }
 async function saveTask(){
@@ -1238,10 +1230,15 @@ async function saveTask(){
   let err;
   if(editTaskId!=null){
     const {error}=await _sb.from('tasks').update(row).eq('id',editTaskId);
-    err=error;if(!error){const i=tasks.findIndex(x=>x.id===editTaskId);if(i>-1)tasks[i]={...row,id:editTaskId}}
+    err=error;
+    if(!error){
+      const idx=tasks.findIndex(x=>x.id===editTaskId);
+      if(idx>-1) tasks[idx]={...row, id:editTaskId};
+    }
   } else {
     const {data,error}=await _sb.from('tasks').insert(row).select().single();
-    err=error;if(!error)tasks.push(data);
+    err=error;
+    if(!error) tasks.push(data);
   }
   if(err){toast('Error: '+err.message,false);return}
   closeOv('taskModal');renderKanban();updateHome();toast('Tarea guardada');editTaskId=null;
@@ -1252,7 +1249,11 @@ async function delTask(id){
 }
 async function moveTask(id,col){
   const t=tasks.find(x=>x.id===id);
-  if(t){t.col=col;await _sb.from('tasks').update({col}).eq('id',id);renderKanban()}
+  if(t){
+    t.col=col;
+    await _sb.from('tasks').update({col}).eq('id',id);
+    renderKanban();
+  }
 }
 function renderKanban(){
   const cols=['todo','inprogress','review','done'];
@@ -1264,10 +1265,23 @@ function renderKanban(){
     const ts=tasks.filter(t=>t.col===col);
     document.getElementById('cnt-'+col).textContent=ts.length;
     document.getElementById('col-'+col).innerHTML=ts.length?ts.map(t=>{
-      const ov=t.due&&t.due<today&&col!=='done';
-      const moveOpts=cols.filter(c=>c!==col).map(c=>'<button class="btn btn-ghost btn-sm" style="font-size:.6rem;padding:3px 6px" onclick="moveTask('+t.id+',\''+c+'\')">→'+colLabels[c]+'</button>').join('');
-      const tPrio=t.priority||t.prio||'med';const tProj=t.project||t.proj||'';
-      return'<div class="task-card"><div class="tc-title">'+t.title+'</div><div class="tc-meta"><span class="badge '+pm[tPrio]+'" style="font-size:.6rem">'+pl[tPrio]+'</span>'+(tProj?'<span class="tag" style="font-size:.6rem">'+tProj+'</span>':'')+(t.due?'<span class="tc-due'+(ov?' overdue':'')+'"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+fmtDate(t.due)+'</span>':'')+'</div><div style="display:flex;gap:3px;margin-top:7px;flex-wrap:wrap">'+moveOpts+'<button class="btn btn-danger btn-sm" style="font-size:.6rem;padding:3px 6px" onclick="delTask(\''+t.id+'\')">✕</button></div></div>';
+      const ov=t.due && t.due<today && col!=='done';
+      const moveOpts=cols.filter(c=>c!==col).map(c=>`<button class="btn btn-ghost btn-sm" style="font-size:.6rem;padding:3px 6px" onclick="moveTask('${t.id}','${c}')">→${colLabels[c]}</button>`).join('');
+      const prio = t.priority || t.prio || 'med';
+      const tProj = t.project || t.proj || '';
+      return `<div class="task-card">
+        <div class="tc-title">${escapeHtml(t.title)}</div>
+        <div class="tc-meta">
+          <span class="badge ${pm[prio]}" style="font-size:.6rem">${pl[prio]}</span>
+          ${tProj ? `<span class="tag" style="font-size:.6rem">${escapeHtml(tProj)}</span>` : ''}
+          ${t.due ? `<span class="tc-due${ov?' overdue':''}"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${fmtDate(t.due)}</span>` : ''}
+        </div>
+        <div style="display:flex;gap:3px;margin-top:7px;flex-wrap:wrap">
+          ${moveOpts}
+          <button class="btn btn-ghost btn-sm" style="font-size:.6rem;padding:3px 6px" onclick="openTaskModal(null,'${t.id}')">✎</button>
+          <button class="btn btn-danger btn-sm" style="font-size:.6rem;padding:3px 6px" onclick="delTask('${t.id}')">✕</button>
+        </div>
+      </div>`;
     }).join(''):'<div style="color:var(--text3);font-size:.72rem;text-align:center;padding:10px 0">Vacío</div>';
   });
   const pending=tasks.filter(t=>t.col!=='done').length;
@@ -1314,7 +1328,7 @@ function renderCal(){
   for(let i=0;i<first;i++)html+='<div class="cal-day other"></div>';
   for(let d=1;d<=last;d++){
     const ds=calYear+'-'+mm+'-'+String(d).padStart(2,'0');
-    html+='<div class="cal-day'+(ds===todayStr?' today':'')+(evDays.has(d)?' has-ev':'')+'" onclick="showDayEvents(\''+ds+'\')">'+(d)+'</div>';
+    html+='<div class="cal-day'+(ds===todayStr?' today':'')+(evDays.has(d)?' has-ev':'')+'" onclick="showDayEvents(\''+ds+'\')">'+d+'</div>';
   }
   document.getElementById('calGrid').innerHTML=html;
   const evColors={meeting:'var(--blue)',deadline:'var(--red)',call:'var(--green)',other:'var(--purple)'};
@@ -1322,10 +1336,10 @@ function renderCal(){
   document.getElementById('calEvTitle').textContent='Eventos — '+months[calMonth];
   document.getElementById('calEvents').innerHTML=mEvs.length?mEvs.map(e=>`
     <div class="cal-ev" style="border-left-color:${evColors[e.type]||'var(--blue)'}">
-      <div class="ce-title">${e.title}</div>
+      <div class="ce-title">${escapeHtml(e.title)}</div>
       <div class="ce-date">${fmtDate(e.date)}${e.time?' · '+e.time:''} <span class="tag" style="margin-left:3px">${e.type}</span></div>
-      ${e.notes?'<div style="font-size:.7rem;color:var(--text3);margin-top:2px">'+e.notes+'</div>':''}
-      <button class="btn btn-danger btn-sm" style="margin-top:5px;font-size:.62rem;padding:2px 7px" onclick="delEvent(${e.id})">Eliminar</button>
+      ${e.notes?'<div style="font-size:.7rem;color:var(--text3);margin-top:2px">'+escapeHtml(e.notes)+'</div>':''}
+      <button class="btn btn-danger btn-sm" style="margin-top:5px;font-size:.62rem;padding:2px 7px" onclick="delEvent('${e.id}')">Eliminar</button>
     </div>`).join(''):'<div class="empty">Sin eventos este mes</div>';
 }
 function showDayEvents(ds){
@@ -1334,10 +1348,10 @@ function showDayEvents(ds){
   document.getElementById('calEvTitle').textContent='Eventos — '+fmtDate(ds);
   document.getElementById('calEvents').innerHTML=dayEvs.map(e=>`
     <div class="cal-ev" style="border-left-color:${evColors[e.type]||'var(--blue)'}">
-      <div class="ce-title">${e.title}</div>
+      <div class="ce-title">${escapeHtml(e.title)}</div>
       <div class="ce-date">${e.time?'🕐 '+e.time:''}</div>
-      ${e.notes?'<div style="font-size:.7rem;color:var(--text3);margin-top:2px">'+e.notes+'</div>':''}
-      <button class="btn btn-danger btn-sm" style="margin-top:5px;font-size:.62rem;padding:2px 7px" onclick="delEvent(${e.id})">Eliminar</button>
+      ${e.notes?'<div style="font-size:.7rem;color:var(--text3);margin-top:2px">'+escapeHtml(e.notes)+'</div>':''}
+      <button class="btn btn-danger btn-sm" style="margin-top:5px;font-size:.62rem;padding:2px 7px" onclick="delEvent('${e.id}')">Eliminar</button>
     </div>`).join('');
 }
 
@@ -1348,7 +1362,7 @@ function openNoteModal(id=null){
     const n=notes.find(x=>x.id===id);if(!n)return;
     document.getElementById('nmTitle').textContent='Editar Nota';
     document.getElementById('nTitle').value=n.title;
-    document.getElementById('nBody').value=n.body;
+    document.getElementById('nBody').value=n.body||'';
     noteColorSel=n.color||'#1EB0F0';
   }else{
     document.getElementById('nmTitle').textContent='Nueva Nota';
@@ -1385,13 +1399,13 @@ async function delNote(id){
 }
 function renderNotes(){
   document.getElementById('notesGrid').innerHTML=notes.length?notes.map(n=>`
-    <div class="note-card" onclick="openNoteModal(${n.id})">
+    <div class="note-card" onclick="openNoteModal('${n.id}')">
       <div class="nc-top" style="background:${n.color}"></div>
-      <div class="nc-title">${n.title}</div>
-      <div class="nc-body">${n.body||'Sin contenido'}</div>
+      <div class="nc-title">${escapeHtml(n.title)}</div>
+      <div class="nc-body">${escapeHtml(n.body||'Sin contenido')}</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px">
         <span class="nc-date">${n.date}</span>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();delNote(${n.id})" title="Eliminar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:11px;height:11px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();delNote('${n.id}')" title="Eliminar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:11px;height:11px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
       </div>
     </div>`).join(''):'<div class="empty" style="grid-column:1/-1">Sin notas. Crea la primera →</div>';
 }
@@ -1440,14 +1454,14 @@ function renderClients(){
   document.getElementById('clientBody').innerHTML=clients.length?clients.map(c=>{
     const cp=projects.filter(p=>(p.company||'').toLowerCase()===c.company.toLowerCase()).length;
     return`<tr>
-      <td><div class="cell-p">${c.company}</div></td>
-      <td>${c.name||'—'}</td>
-      <td style="color:var(--text3);font-size:.76rem">${c.email||'—'}</td>
-      <td style="color:var(--text3);font-size:.76rem">${c.phone||'—'}</td>
+      <td><div class="cell-p">${escapeHtml(c.company)}</div></td>
+      <td>${escapeHtml(c.name||'—')}</td>
+      <td style="color:var(--text3);font-size:.76rem">${escapeHtml(c.email||'—')}</td>
+      <td style="color:var(--text3);font-size:.76rem">${escapeHtml(c.phone||'—')}</td>
       <td><span class="badge bp">${cp} proyecto${cp!==1?'s':''}</span></td>
       <td><div style="display:flex;gap:4px">
-        <button class="btn btn-ghost btn-sm btn-icon" onclick="openClientModal(${c.id})" title="Editar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:12px;height:12px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="delClient(${c.id})" title="Eliminar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openClientModal('${c.id}')" title="Editar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:12px;height:12px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="delClient('${c.id}')" title="Eliminar"><svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
       </div></td>
     </tr>`;
   }).join(''):`<tr><td colspan="6" class="empty">Sin clientes aún.</td></tr>`;
@@ -1475,7 +1489,7 @@ function renderStats(){
   const colors=['#1EB0F0','#2EC4B6','#F5A623','#E84545','#8B5CF6'];
   document.getElementById('statBars').innerHTML=sorted.length?sorted.map(([k,v],i)=>`
     <div class="bar-row">
-      <div class="bar-lbl">${k}</div>
+      <div class="bar-lbl">${escapeHtml(k)}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${Math.max(v/maxR*100,1)}%;background:${colors[i%colors.length]}">${fmt(v)}</div></div>
     </div>`).join(''):'<div class="empty">Sin datos</div>';
 }
@@ -1502,10 +1516,10 @@ function updateHome(){
   const lm={done:'Terminado',maintenance:'Mantenimiento',progress:'En Proceso',cancelled:'Cancelado'};
   const recent=[...projects].reverse().slice(0,5);
   document.getElementById('hRecentProj').innerHTML=recent.length?recent.map(p=>`
-    <div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="viewProj(${p.id})">
+    <div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="viewProj('${p.id}')">
       <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-        <div style="font-size:.7rem;color:var(--text3)">${p.company||'—'}</div>
+        <div style="font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(p.name)}</div>
+        <div style="font-size:.7rem;color:var(--text3)">${escapeHtml(p.company||'—')}</div>
       </div>
       <span class="badge ${bm[p.status]}">${lm[p.status]}</span>
       <span class="mono" style="font-size:.76rem;font-weight:600;flex-shrink:0">${fmt(p.price)}</span>
@@ -1515,8 +1529,8 @@ function updateHome(){
   const pm={low:'bl',med:'bm',high:'bc'};
   document.getElementById('hUpTasks').innerHTML=upcoming.length?upcoming.map(t=>`
     <div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1;font-size:.78rem;font-weight:500;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</div>
-      <span class="badge ${pm[t.prio]}" style="font-size:.58rem;flex-shrink:0">${t.prio}</span>
+      <div style="flex:1;font-size:.78rem;font-weight:500;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(t.title)}</div>
+      <span class="badge ${pm[t.priority||t.prio]}" style="font-size:.58rem;flex-shrink:0">${t.priority||t.prio}</span>
       <span style="font-size:.7rem;color:${t.due<today?'var(--red)':'var(--text3)'};flex-shrink:0">${fmtDate(t.due)}</span>
     </div>`).join(''):'<div class="empty">Sin tareas con fecha</div>';
 }
@@ -1584,31 +1598,23 @@ function loadSettingsForm(){
 /* ═══════ LOGOUT ═══════ */
 async function logout(){
   await _sb.auth.signOut();
-  window.location.href='login.html';
+  window.location.href='index.html';
 }
 
-/* ═══════ INIT — auth guard + load all data ═══════ */
+/* ═══════ INIT ═══════ */
 async function initApp(){
-  // Show loading state
   document.getElementById('content').style.opacity='0';
-
-  // Check session
   const {data:{session},error:sErr}=await _sb.auth.getSession();
   if(!session){
-    window.location.href='login.html';
+    window.location.href='index.html';
     return;
   }
   _user=session.user;
-
-  // Update avatar initials from email
   const initials=(_user.email||'GW').slice(0,2).toUpperCase();
   document.querySelector('.avatar').textContent=initials;
-
-  // Add logout to avatar click
   document.querySelector('.avatar').title='Cerrar sesión';
   document.querySelector('.avatar').onclick=()=>{if(confirm('¿Cerrar sesión?'))logout()};
 
-  // Load all data in parallel
   const [
     {data:projData},
     {data:taskData},
@@ -1625,7 +1631,6 @@ async function initApp(){
     _sb.from('settings').select('*').eq('user_id',_user.id).maybeSingle()
   ]);
 
-  // Populate state — map Supabase field names to local aliases
   projects = (projData||[]).map(p=>({...p, desc:p.description}));
   tasks    = (taskData||[]).map(t=>({...t, prio:t.priority, proj:t.project}));
   events   = eventData||[];
@@ -1645,16 +1650,26 @@ async function initApp(){
   }
 
   loadSettingsForm();
-
-  // Listen for auth changes (token refresh / sign out in another tab)
   _sb.auth.onAuthStateChange((event,session)=>{
-    if(event==='SIGNED_OUT') window.location.href='login.html';
+    if(event==='SIGNED_OUT') window.location.href='index.html';
   });
 
-  // Render everything
   document.getElementById('content').style.opacity='1';
   document.getElementById('content').style.transition='opacity .3s';
   renderProj();renderKanban();renderNotes();renderClients();updateHome();renderCal();
+}
+
+// Helper para escapar HTML en las inyecciones dinámicas
+function escapeHtml(str){
+  if(!str) return '';
+  return str.replace(/[&<>]/g, function(m){
+    if(m==='&') return '&amp;';
+    if(m==='<') return '&lt;';
+    if(m==='>') return '&gt;';
+    return m;
+  }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c){
+    return c;
+  });
 }
 
 initApp();
